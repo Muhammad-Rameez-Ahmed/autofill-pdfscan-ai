@@ -1,0 +1,202 @@
+<div class="min-h-screen p-4 md:p-8 flex flex-col items-center">
+  <!-- Header Section -->
+  <header class="w-full max-w-4xl mb-12 text-center" id="app-header">
+    <h1 class="text-4xl md:text-6xl font-bold tracking-tight mb-4 text-stone-900">
+      Smart <span class="text-emerald-600 italic">PDF</span> Filler
+    </h1>
+    <p class="text-stone-500 max-w-2xl mx-auto">
+      Upload your PDF document, and our AI will automatically extract the relevant information to fill out the form for you.
+    </p>
+  </header>
+
+  <main class="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <!-- Upload Section -->
+    <section class="lg:col-span-5 space-y-6">
+      <div 
+        class="relative group border-2 border-dashed border-stone-300 rounded-3xl p-8 transition-all duration-300 hover:border-emerald-500 hover:bg-emerald-50/30 flex flex-col items-center justify-center text-center min-h-[300px]"
+        [class.border-emerald-500]="uploadStatus() === 'success'"
+        [class.bg-emerald-50]="uploadStatus() === 'success'"
+        id="upload-container"
+      >
+        <input 
+          type="file" 
+          (change)="onFileSelected($event)" 
+          accept="application/pdf"
+          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          id="pdf-upload-input"
+        />
+        
+        <div class="space-y-4 pointer-events-none">
+          <div class="w-16 h-16 bg-stone-100 rounded-2xl flex items-center justify-center mx-auto group-hover:bg-emerald-100 transition-colors">
+            @if (isExtracting()) {
+              <mat-icon class="text-emerald-600 animate-spin">sync</mat-icon>
+            } @else if (uploadStatus() === 'success') {
+              <mat-icon class="text-emerald-600">check_circle</mat-icon>
+            } @else {
+              <mat-icon class="text-stone-400 group-hover:text-emerald-600">picture_as_pdf</mat-icon>
+            }
+          </div>
+          
+          <div>
+            <p class="font-semibold text-stone-800">
+              @if (isExtracting()) {
+                Extracting data...
+              } @else if (uploadStatus() === 'success') {
+                PDF Processed!
+              } @else {
+                Click or drag PDF here
+              }
+            </p>
+            <p class="text-xs text-stone-400 mt-1">Maximum size: 10MB</p>
+          </div>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="mt-4 p-3 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100" id="error-message">
+            {{ errorMessage() }}
+          </div>
+        }
+      </div>
+
+      <div class="bg-white rounded-3xl p-6 shadow-sm border border-stone-100" id="instructions-card">
+        <h3 class="text-sm font-semibold uppercase tracking-wider text-stone-400 mb-4">How it works</h3>
+        <ul class="space-y-3 text-sm text-stone-600">
+          <li class="flex items-start gap-3">
+            <span class="flex-shrink-0 w-5 h-5 bg-stone-100 rounded-full flex items-center justify-center text-[10px] font-bold">01</span>
+            Upload an invoice or document PDF.
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="flex-shrink-0 w-5 h-5 bg-stone-100 rounded-full flex items-center justify-center text-[10px] font-bold">02</span>
+            AI analyzes the content in seconds.
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="flex-shrink-0 w-5 h-5 bg-stone-100 rounded-full flex items-center justify-center text-[10px] font-bold">03</span>
+            Review and submit the auto-filled form.
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Form Section -->
+    <section class="lg:col-span-7 space-y-8">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="bg-white rounded-3xl p-8 shadow-sm border border-stone-100 space-y-6" id="data-form">
+        <div class="grid grid-cols-1 gap-6">
+          <!-- Number of Colors -->
+          <div class="space-y-2">
+            <label for="numberOfColors" class="text-xs font-semibold uppercase tracking-wider text-stone-400 ml-1">Number of Colors</label>
+            <input 
+              id="numberOfColors"
+              type="number" 
+              formControlName="numberOfColors"
+              placeholder="e.g. 5"
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              [class.border-red-300]="form.get('numberOfColors')?.touched && form.get('numberOfColors')?.invalid"
+            />
+          </div>
+
+          <!-- Color Names -->
+          <div class="space-y-2">
+            <label for="colorNames" class="text-xs font-semibold uppercase tracking-wider text-stone-400 ml-1">Color Names</label>
+            <input 
+              id="colorNames"
+              type="text" 
+              formControlName="colorNames"
+              placeholder="Red, Blue, Green..."
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              [class.border-red-300]="form.get('colorNames')?.touched && form.get('colorNames')?.invalid"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Height -->
+            <div class="space-y-2">
+              <label for="height" class="text-xs font-semibold uppercase tracking-wider text-stone-400 ml-1">Height</label>
+              <input 
+                id="height"
+                type="number" 
+                formControlName="height"
+                placeholder="0"
+                class="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+            </div>
+
+            <!-- Width -->
+            <div class="space-y-2">
+              <label for="width" class="text-xs font-semibold uppercase tracking-wider text-stone-400 ml-1">Width</label>
+              <input 
+                id="width"
+                type="number" 
+                formControlName="width"
+                placeholder="0"
+                class="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+            </div>
+
+            <!-- Stitches -->
+            <div class="space-y-2">
+              <label for="stitches" class="text-xs font-semibold uppercase tracking-wider text-stone-400 ml-1">Stitches</label>
+              <input 
+                id="stitches"
+                type="number" 
+                formControlName="stitches"
+                placeholder="0"
+                class="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-6 flex flex-col sm:flex-row gap-4">
+          <button 
+            type="submit" 
+            class="flex-1 bg-stone-900 text-white font-semibold py-4 rounded-2xl hover:bg-stone-800 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+            [disabled]="form.invalid || isExtracting()"
+            id="submit-button"
+          >
+            Submit Application
+          </button>
+          
+          <button 
+            type="button" 
+            (click)="resetForm()"
+            class="px-6 py-4 border border-stone-200 text-stone-500 font-semibold rounded-2xl hover:bg-stone-50 transition-all"
+            id="reset-button"
+          >
+            Reset
+          </button>
+        </div>
+
+        @if (needsKey()) {
+          <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col items-center gap-3 text-center">
+            <p class="text-sm text-amber-800 font-medium">It looks like your API key is restricted or invalid for this domain.</p>
+            <button 
+              type="button"
+              (click)="setupKey()"
+              class="bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-amber-700 transition-all flex items-center gap-2"
+            >
+              <mat-icon class="text-sm">key</mat-icon>
+              Connect Paid API Key
+            </button>
+            <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" class="text-[10px] text-amber-600 underline">Learn about Gemini API billing</a>
+          </div>
+        }
+      </form>
+
+      <!-- JSON Output Section -->
+      @if (rawJson()) {
+        <div class="bg-stone-900 rounded-3xl p-8 shadow-xl border border-stone-800 animate-in fade-in slide-in-from-bottom-4 duration-500" id="json-output">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-emerald-500">Extracted JSON Data</h3>
+            <mat-icon class="text-stone-500 text-sm">code</mat-icon>
+          </div>
+          <pre class="text-emerald-400 font-mono text-sm overflow-x-auto p-4 bg-black/30 rounded-xl border border-white/5">{{ rawJson() }}</pre>
+        </div>
+      }
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-20 text-stone-400 text-xs text-center pb-8">
+    <p>&copy; 2026 Smart PDF Filler. Powered by Gemini AI.</p>
+  </footer>
+</div>

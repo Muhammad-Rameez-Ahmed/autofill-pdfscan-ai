@@ -1,0 +1,5 @@
+{
+  "name": "Smart PDF Form Filler",
+  "description": "Automatically extract data from PDF documents and populate form fields using AI.",
+  "requestFramePermissions": []
+}
