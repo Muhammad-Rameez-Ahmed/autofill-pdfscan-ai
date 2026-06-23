@@ -108,7 +108,7 @@ export class App {
 
   private async extractDataWithAI(base64Data: string): Promise<ExtractedData | null> {
     // Try to get the selected key first, then fallback to build-time key
-    const apiKey = "AIzaSyBujAr38PlyFmp6ve6htRUao_RuA8CQztA";
+    const apiKey = "AIzaSyC512iMikLS8VtTlawcsRUlSe7RmWmV2g0";
     const ai = new GoogleGenAI({ apiKey });
     
     try {
